@@ -1,3 +1,17 @@
+---@diagnostic disable: unused-function, undefined-global
+--[[ Documentation
+    Helios:notification(Text) -- Sends notification
+    Helios:MainWindow(str: name) Maximum 1
+        MainWindow:Tab(str: Name)
+            Tab:Button(str: Name, func: Callback)
+            Tab:Toggle(str: Name, bool: initState, func: Callback(Bool))
+            Tab:Colorpicker(str: Name, Color3: initColor, func: Callback(Color3))
+            Tab:Slider(str: Name, int: MinValue, int: MaxValue, func: Callback(int))
+            Tab:Textbox(str: Name, bool: disapear, func: Callback(str)) -- Does what you enter disapear
+            Tab:Dropdown(str: Name, tbl: tuple, func: Callback(any))
+            Tab:Label(str: Label)
+            Tab:Spliter() -- Literally a blank space that looks nice, meant to divy up sections.
+]]
 local Helios = loadstring(game:HttpGet("https://raw.githubusercontent.com/TheIronMike/UILibrary/main/Main"))()
 local Menu = Helios:MainWindow("United States of Hav00k")
 
@@ -9,6 +23,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local MarketplaceService = game:GetService("MarketplaceService")
+local UserInputService = game:GetService("UserInputService")
 
 -- Instances
 local LocalPlayer = Players.LocalPlayer
@@ -16,6 +31,12 @@ local Camera = Workspace.CurrentCamera
 
 -- Constants
 local Remotes = ReplicatedStorage:WaitForChild("remotes")
+
+-- Settings Constants
+local DestroyKeyConnection
+local TeleportKeyConnection
+local TargetPlayerForTeleport
+
 
 -- Bank Constants
 local ATMCFrame = CFrame.new(2720.35962, 53.9955444, 253.060837)
@@ -156,7 +177,57 @@ local ConfigurationTab = Menu:Tab("Config")
 local DestroyUI = ConfigurationTab:Button("Destroy UI", function()
     CoreGui.helioslib:Destroy()
 end)
+local DestroyUIKeybind = ConfigurationTab:Textbox("Destroy UI Key", false, function(Text)
+    if Enum.KeyCode[Text] then
+        if DestroyKeyConnection then
+            DestroyKeyConnection:Disconnect()
+        end
 
+        DestroyKeyConnection = UserInputService.InputBegan:Connect(function(inputObject)
+            if inputObject.KeyCode == Enum.KeyCode[Text] then
+                CoreGui.helioslib:Destroy()
+                DestroyKeyConnection:Disconnect()
+            end
+        end)
+    end
+end)
+ConfigurationTab:Spliter()
+local TPLabel = ConfigurationTab:Label("Teleport Control")
+local TargetForTeleport = ConfigurationTab:Textbox("Teleport Target", false, function(Text)
+    local Target
+    for __, Player in next, Players:GetPlayers() do
+        if string.lower(Player.Name) == string.lower(Text) then
+            Target = Player
+        end
+    end
+    if Target then
+        TargetPlayerForTeleport = Target
+    else
+        Helios:notification("Player not found! Did you type their name right?")
+    end
+end)
+local TeleportKeybind = ConfigurationTab:Textbox("Teleport Keybind", false, function(Text)
+    if Enum.KeyCode[Text] then
+        if TeleportKeyConnection then
+            TeleportKeyConnection:Disconnect()
+        end
+
+        TeleportKeyConnection = UserInputService.InputBegan:Connect(function(inputObject)
+            if inputObject.KeyCode == Enum.KeyCode[Text] then
+                local Location = TargetPlayerForTeleport.Character.PrimaryPart.CFrame
+                local NewLocation = CFrame.new(Location * Vector3.new(0,4,0))
+
+                MoveCharacter(NewLocation, false, function() end)
+            end
+        end)
+    end
+end)
+
+local TeleportButton = ConfigurationTab:Button("Teleport", function()
+    local Location = TargetPlayerForTeleport.Character.PrimaryPart.CFrame
+    local NewLocation = CFrame.new(Location * Vector3.new(0,4,0))
+    MoveCharacter(NewLocation, false, function() end)
+end)
 -- Bank Tab
 local BankingTab = Menu:Tab("Bank")
 BankingTab:Label("ATM")
@@ -210,9 +281,7 @@ local TransportDrownDown = TransportTab:Dropdown("Location", LocationsForTranspo
     LocationSelectedForTransport = Selected
 end)
 local Transport = TransportTab:Button("Go", function()
-    MoveCharacter(LocationCFramesForTransport[LocationSelectedForTransport], false, function()
-        local Arrived = true
-    end)
+    MoveCharacter(LocationCFramesForTransport[LocationSelectedForTransport], false, function() end)
 end)
 
 -- Gun Tab
