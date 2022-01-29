@@ -82,6 +82,7 @@ local GunCosts = {
 }
 local SelectedGun = "M14"
 
+-- Illegal Gun Store
 local IllegalGunList = {"Duct Tape", "Prisoner Disguise", "Makarov", "AK-47"}
 local IllegalPriceList = {
     ["Duct Tape"] = 125,
@@ -92,6 +93,63 @@ local IllegalPriceList = {
 local IllegalGunSelection = "Duct Tape"
 local IllegalGunStoreCFrame = CFrame.new(-7997.30078, 88.0444946, -59.4273376, 0.0488396585, 0.0037649197, -0.998799562, -1.36487133e-05, 0.999992907, 0.00376875023, 0.998806655, -0.000170421816, 0.0488393642)
 
+-- Hacker Store
+local HackerGunStoreCFrame = CFrame.new(3953.0105, 54.5998917, -2351.16797, 0.998504162, 1.01816131e-05, -0.0546758622, -9.03107562e-08, 1, 0.000184246965, 0.0546758622, -0.000183965458, 0.998504162)
+local HackerGunList = {"Hack"}
+
+-- Bomb Store
+local BombItemSelection
+local BombShopCFrame = CFrame.new(6574.73389, 42.4794579, 186.288727, -0.957307696, -0.00134941505, 0.289067596, -1.77687652e-05, 0.99998939, 0.00460934127, -0.289070725, 0.00440742774, -0.957297564)
+local BombShopList = {"TouchMine", "C4", "Dynamite"}
+local BombShopPrices = {
+    ["TouchMine"] = 500;
+    ["C4"] = 800;
+    ["Dynamite"] = 250;
+}
+
+-- Hacking Store
+local HackItemSelected
+local HackShopCFrame = CFrame.new(3956.12109, 54.5718307, -2354.34375, 0.999143243, 0.000299725478, 0.0413843021, -9.35609296e-06, 0.999975383, -0.00701647019, -0.0413853861, 0.007010072, 0.999118626)
+local HackShopList = {"Criminal Placement", "Hack"}
+local HackShopPrices = {
+    ["Criminal Placement"] = 400,
+    ["Hack"] = 200,
+}
+
+-- Car Store
+local CarsList = {"BMW M5", "Ford Mustang Shelby GT500", "Van", "Crown Vic", "Benz S65 AMG Convertible", "Retro Ford Explorer", "Ford Explorer", "Dodge Charger", "Cadillac Escalade", "Honda Civic", "Taxi", "Audi A8", "Ford F-150", "Lexus LX", "Land Cruiser"}
+local ExoticCarsList = {"Phantom", "Lamborghini Aventador", "Aston Martin DB10", "Ford GT", "La Ferrari", "Mercedes G Wagon"}
+local CarPrices = {
+    ["BMW M5"] = 2200,
+    ["Ford Mustang Shelby GT500"] = 3500,
+    ["Van"] = 650,
+    ["Crown Vic"] = 500,
+    ["Benz S65 AMG Convertible"] = 2700,
+    ["Retro Ford Explorer"] = 300,
+    ["Ford Explorer"] = 700,
+    ["Dodge Charger"] = 1300,
+    ["Cadillac Escalade"] = 2500,
+    ["Honda Civic"] = 500,
+    ["Taxi"] = 575,
+    ["Audi A8"] = 3500,
+    ["Ford F-150"] = 775,
+    ["Lexus LX"] = 5000,
+    ["Land Cruiser"] = 2500,
+}
+local ExoticCarPrices = {
+    ["Phantom"] = 500,
+    ["Lamborghini Aventador"] = 500,
+    ["Aston Martin DB10"] = 500,
+    ["Ford GT"] = 500,
+    ["La Ferrari"] = 500,
+    ["Mercedes G Wagon"] = 500,
+}
+local SelectedCarNormal
+local SelectedCarExotic
+local SelectedCarToSpawn
+local ExoticCarGamepassID = 7006549
+local CarShopCFrame = CFrame.new(2745.96582, 54.0710983, 279.605408, -0.973617375, -0.00156753196, -0.228181049, -8.46007788e-06, 0.999976635, -0.0068334653, 0.228186443, -0.00665125297, -0.973594666)
+local CarSpawnCFrame = CFrame.new(2693.15405, 53.9715729, 181.84761, -0.00333632505, -0.00695545645, -0.999970257, -8.99662973e-06, 0.999975801, -0.0069554653, 0.999994457, -1.42081608e-05, -0.00333630666)
 -- Hooks
 
 -- Functions
@@ -152,22 +210,25 @@ local function MoveCharacter(Goal, Return, Callback)
         Character.PrimaryPart.Anchored = false
         task.wait(0.22)
         Callback()
-        task.wait(0.1)
-        HideCharacter(false)
         if Return then
-            HideCharacter(true)
             local NewCharacterTween = TweenService:Create(Character.PrimaryPart, TweenInformation, {CFrame = PreviousCFrame})
-
+            
+            task.wait(0.1)
             Character.PrimaryPart.Anchored = true
             NewCharacterTween:Play()
 
             NewCharacterTween.Completed:Connect(function()
+                task.wait()
                 Camera.CameraType = Enum.CameraType.Custom
                 Character.PrimaryPart.Anchored = false
                 HideCharacter(false)
+                return true
             end)
+            return true
         else
             Camera.CameraType = Enum.CameraType.Custom
+            HideCharacter(false)
+            return true
         end
     end)
 end
@@ -183,8 +244,8 @@ local DestroyUIKeybind = ConfigurationTab:Textbox("Destroy UI Key", false, funct
             DestroyKeyConnection:Disconnect()
         end
 
-        DestroyKeyConnection = UserInputService.InputBegan:Connect(function(inputObject)
-            if inputObject.KeyCode == Enum.KeyCode[Text] then
+        DestroyKeyConnection = UserInputService.InputBegan:Connect(function(inputObject, gameProcessed)
+            if inputObject.KeyCode == Enum.KeyCode[Text] and not gameProcessed then
                 CoreGui.helioslib:Destroy()
                 DestroyKeyConnection:Disconnect()
             end
@@ -212,8 +273,8 @@ local TeleportKeybind = ConfigurationTab:Textbox("Teleport Keybind", false, func
             TeleportKeyConnection:Disconnect()
         end
 
-        TeleportKeyConnection = UserInputService.InputBegan:Connect(function(inputObject)
-            if inputObject.KeyCode == Enum.KeyCode[Text] then
+        TeleportKeyConnection = UserInputService.InputBegan:Connect(function(inputObject, gameProcessed)
+            if inputObject.KeyCode == Enum.KeyCode[Text] and not gameProcessed then
                 local Location = TargetPlayerForTeleport.Character.PrimaryPart.CFrame
                 local NewLocation = CFrame.new(Location * Vector3.new(0,4,0))
 
@@ -295,7 +356,7 @@ local GunSelection = GunTab:Dropdown("Gun Selection", GunOptions, function(Selec
     local RequiresGamepass = CheckGamepass("Gun", Selection, GunPackID)
     if not HasGamepass and RequiresGamepass then
         GunTableFrames.Price:Change("Weapon not unlocked!")
-        Helios:notification("Warning: You do not have the gamepass for this weapon!")
+        Helios:notification("Warning: You do not have the gamepass for this weapon! People will be able to find out you're cheating!")
     else
         GunTableFrames.Price:Change("Price: " .. GunCosts[Selection])
     end
@@ -308,6 +369,7 @@ GunTableFrames.Purchase = GunTab:Button("Buy Gun", function()
     end)
 end)
 GunTab:Spliter()
+-- Illegal Guns
 local IllegalGunFrames = {}
 GunTab:Label("Illegal Gun Store")
 local IllegalGunSelection = GunTab:Dropdown("Item Selection", IllegalGunList, function(Selected)
@@ -320,3 +382,90 @@ IllegalGunFrames.PurchaseIllegalItem = GunTab:Button("Buy Item", function()
         FireRemote("finance", "processPurchase", IllegalItemSelection, "tools", "Dealer")
     end)
 end)
+-- Bomb Store
+GunTab:Spliter()
+local BombGunFrames = {}
+GunTab:Label("Bombs Store")
+local BombSelection = GunTab:Dropdown("Bomb Selection", BombShopList, function(Selected)
+    BombItemSelection = Selected
+    BombGunFrames.BombItemPrice:Change("Price: " .. BombShopPrices[Selected])
+end)
+BombGunFrames.BombItemPrice = GunTab:Label("Price: ")
+BombGunFrames.PurchaseBomb = GunTab:Button("Buy Item", function()
+    MoveCharacter(BombShopCFrame, true, function()
+        FireRemote("finance", "processPurchase", BombItemSelection, "tools", "Dealer")
+    end)
+end)
+GunTab:Spliter()
+local HackingStoreFrames = {}
+GunTab:Label("Criminal Store")
+local HackSelection = GunTab:Dropdown("Item Selection", HackShopList, function(Selected)
+    HackItemSelected = Selected
+    HackingStoreFrames.HackItemPrice:Change("Price: " .. HackShopPrices[Selected])
+end)
+HackingStoreFrames.HackItemPrice = GunTab:Label("Price: ")
+HackingStoreFrames.PurchaseHack = GunTab:Button("Buy Item", function()
+    MoveCharacter(HackShopCFrame, true, function()
+        FireRemote("finance", "processPurchase", HackItemSelected, "tools", "Dealer")
+    end)
+end)
+
+-- Car Store
+local CarTab = Menu:Tab("Car Control")
+local CarTableFrames = {}
+local CarLabel = CarTab:Label("Car Store")
+local CarSelectionFunction = CarTab:Dropdown("Normal Car Selection", CarsList, function(Selection)
+    SelectedCarNormal = Selection
+    CarTableFrames.Price:Change("Price: " .. CarPrices[Selection])
+end)
+CarTableFrames.Price = CarTab:Label("Price: ")
+CarTableFrames.Purchase = CarTab:Button("Purchase Car", function()
+    MoveCharacter(CarShopCFrame, true, function()
+        FireRemote("finance", "processPurchase", SelectedCarNormal, "cars", "Car")
+    end)
+end)
+CarTab:Spliter()
+local ExoticCarTableFrames = {}
+local ExoticCarSelectionFunction = CarTab:Dropdown("Exotic Car Selection", ExoticCarsList, function(Selection)
+    SelectedCarExotic = Selection
+    local HasGamepass = MarketplaceService:UserOwnsGamePassAsync(LocalPlayer.UserId, ExoticCarGamepassID)
+
+    if not HasGamepass then
+        Helios:notification("Warning: You do not have the gamepass for this car! People will be able to find out you're cheating!")
+    end
+    ExoticCarTableFrames.Price:Change("Price: " .. ExoticCarPrices[Selection])
+end)
+ExoticCarTableFrames.Price = CarTab:Label("Price: ")
+ExoticCarTableFrames.Purchase = CarTab:Button("Purchase Exotic Car", function()
+    MoveCharacter(CarShopCFrame, true, function()
+        FireRemote("finance", "processPurchase", SelectedCarExotic, "cars", "Car")
+    end)
+end)
+CarTab:Spliter()
+CarTab:Label("Car Control")
+local CarName = CarTab:Textbox("Car Name", false, function(Text)
+    local isCar = false
+    for __, name in next, CarsList do
+        if Text == name then
+            isCar = true
+        end
+    end
+    for __, name in next, ExoticCarsList do
+        if Text == name then
+            isCar = true
+        end
+    end
+    if isCar then
+        SelectedCarToSpawn = Text
+    else
+        Helios:notification("Invalid car name")
+    end
+end)
+local SpawnCar = CarTab:Button("Spawn Car", function()
+    local Initial = LocalPlayer.Character.PrimaryPart.CFrame
+    MoveCharacter(CarSpawnCFrame, false, function()
+        task.wait(0.4)
+        FireRemote("gameplay", "requestCar", SelectedCarToSpawn)
+    end)
+end)
+--
